@@ -1,0 +1,50 @@
+{
+  "name": "project-tree-generator",
+  "displayName": "Project Tree Generator",
+  "description": "Generates, filters, and exports customizable project directory trees directly from your sidebar.",
+  "version": "1.0.0",
+  "publisher": "expert-extension-developer",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:project-tree-view"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "project-tree-generator",
+          "title": "Project Tree Generator",
+          "icon": "$(graph-left)"
+        }
+      ]
+    },
+    "views": {
+      "project-tree-generator": [
+        {
+          "id": "project-tree-view",
+          "type": "webview",
+          "name": "Tree Configurator"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.18",
+    "@types/vscode": "^1.75.0",
+    "typescript": "^5.0.4"
+  }
+}

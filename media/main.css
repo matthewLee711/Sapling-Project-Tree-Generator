@@ -1,0 +1,343 @@
+/* CSS for VS Code Project Tree Generator Extension */
+
+:root {
+    --border-radius: 4px;
+    --transition-speed: 0.2s;
+    --tree-indent: 14px;
+}
+
+body {
+    padding: 10px 12px;
+    color: var(--vscode-sideBar-foreground, #cccccc);
+    font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+    font-size: var(--vscode-font-size, 13px);
+    background-color: transparent;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.header h3 {
+    margin: 0 0 12px 0;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--vscode-sideBarTitle-foreground, #ffffff);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.checkbox-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+    margin: 4px 0;
+}
+
+.control-label {
+    font-weight: 500;
+    color: var(--vscode-foreground);
+}
+
+.field-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--vscode-descriptionForeground, #888888);
+}
+
+/* Switch Styles */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 32px;
+    height: 18px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--vscode-checkbox-background, #3c3c3c);
+    border: 1px solid var(--vscode-checkbox-border, #6b6b6b);
+    transition: var(--transition-speed);
+    border-radius: 9px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 12px;
+    width: 12px;
+    left: 2px;
+    bottom: 2px;
+    background-color: var(--vscode-checkbox-foreground, #f0f0f0);
+    transition: var(--transition-speed);
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--vscode-button-background, #007acc);
+    border-color: var(--vscode-button-background, #007acc);
+}
+
+input:checked + .slider:before {
+    transform: translateX(14px);
+    background-color: var(--vscode-button-foreground, #ffffff);
+}
+
+/* Input Container & Error States */
+.input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 6px 8px;
+    padding-right: 28px;
+    background-color: var(--vscode-input-background, #3c3c3c);
+    color: var(--vscode-input-foreground, #cccccc);
+    border: 1px solid var(--vscode-input-border, #6b6b6b);
+    border-radius: var(--border-radius);
+    outline: none;
+    font-family: var(--vscode-editor-font-family, monospace);
+    font-size: 12px;
+    transition: border-color var(--transition-speed);
+}
+
+input[type="text"]:focus {
+    border-color: var(--vscode-focusBorder, #007acc);
+}
+
+input[type="text"].invalid {
+    border-color: var(--vscode-inputValidation-errorBorder, #be1100);
+    background-color: var(--vscode-inputValidation-errorBackground, #5a1d1d);
+}
+
+.error-indicator {
+    display: none;
+    position: absolute;
+    right: 8px;
+    cursor: help;
+}
+
+input[type="text"].invalid + .error-indicator {
+    display: inline;
+}
+
+.error-message {
+    font-size: 11px;
+    color: var(--vscode-inputValidation-errorForeground, #f88070);
+    margin-top: 2px;
+    display: none;
+    word-break: break-all;
+}
+
+/* Buttons */
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background-color var(--transition-speed), transform 0.1s;
+    user-select: none;
+    width: 100%;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn-primary {
+    background-color: var(--vscode-button-background, #007acc);
+    color: var(--vscode-button-foreground, #ffffff);
+}
+
+.btn-primary:hover {
+    background-color: var(--vscode-button-hoverBackground, #0062a3);
+}
+
+.btn-secondary {
+    background-color: var(--vscode-button-secondaryBackground, #5f5f5f);
+    color: var(--vscode-button-secondaryForeground, #ffffff);
+}
+
+.btn-secondary:hover {
+    background-color: var(--vscode-button-secondaryHoverBackground, #4c4c4c);
+}
+
+.btn-small {
+    padding: 3px 8px;
+    width: auto;
+    font-size: 10px;
+}
+
+/* Divider */
+.divider {
+    border: 0;
+    border-top: 1px solid var(--vscode-sideBar-border, #3c3c3c);
+    margin: 14px 0;
+}
+
+/* Tree Section */
+.tree-section {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.tree-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.tree-header h4 {
+    margin: 0;
+    font-weight: 600;
+    color: var(--vscode-sideBarSectionHeader-foreground, #cccccc);
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.tree-container {
+    flex: 1;
+    overflow-y: auto;
+    background-color: var(--vscode-editor-background, #1e1e1e);
+    border: 1px solid var(--vscode-sideBar-border, #3c3c3c);
+    border-radius: var(--border-radius);
+    padding: 8px;
+    font-family: var(--vscode-editor-font-family, Consolas, Monaco, monospace);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.loading {
+    color: var(--vscode-descriptionForeground, #888888);
+    font-style: italic;
+    text-align: center;
+    margin-top: 20px;
+}
+
+/* Tree Items UI */
+.tree-node-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.tree-node {
+    display: flex;
+    align-items: center;
+    padding: 2px 4px;
+    border-radius: 3px;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.tree-node:hover {
+    background-color: var(--vscode-list-hoverBackground, #2a2d2e);
+    color: var(--vscode-list-hoverForeground, #ffffff);
+}
+
+.tree-node.directory {
+    font-weight: 500;
+    color: var(--vscode-gitDecoration-modifiedResourceForeground, #e2c08d);
+}
+
+.tree-node.file {
+    color: var(--vscode-foreground, #cccccc);
+}
+
+/* Icon / Arrow Styles */
+.tree-node .arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    font-size: 9px;
+    color: var(--vscode-descriptionForeground, #888888);
+    transition: transform 0.15s ease;
+}
+
+.tree-node.collapsed .arrow {
+    transform: rotate(-90deg);
+}
+
+.tree-node .arrow.empty {
+    visibility: hidden;
+}
+
+.tree-node .icon {
+    display: flex;
+    align-items: center;
+    margin-right: 6px;
+    font-size: 13px;
+}
+
+.tree-node.directory .icon {
+    color: var(--vscode-gitDecoration-modifiedResourceForeground, #e2c08d);
+}
+
+.tree-node.file .icon {
+    color: var(--vscode-descriptionForeground, #888888);
+}
+
+/* Tree children nesting with dynamic guideline */
+.tree-node-children {
+    padding-left: var(--tree-indent);
+    border-left: 1px dashed var(--vscode-tree-indentGuidesStroke, #404040);
+    margin-left: 11px; /* Center with the arrow */
+    display: flex;
+    flex-direction: column;
+}
+
+.tree-node-children.collapsed {
+    display: none;
+}
