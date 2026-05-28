@@ -13,7 +13,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onView:project-tree-view"
+    "onView:sapling-project-tree-view"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -29,7 +29,7 @@
     "views": {
       "project-tree-generator": [
         {
-          "id": "project-tree-view",
+          "id": "sapling-project-tree-view",
           "type": "webview",
           "name": "Tree Configurator"
         }

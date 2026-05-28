@@ -16,7 +16,7 @@ interface TreeConfig {
 }
 
 export class ProjectTreeProvider implements vscode.WebviewViewProvider {
-    public static readonly viewType = 'project-tree-view';
+    public static readonly viewType = 'sapling-project-tree-view';
     private _view?: vscode.WebviewView;
     private _watcher?: vscode.FileSystemWatcher;
     private _config: TreeConfig = {
