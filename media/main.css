@@ -48,13 +48,21 @@ body {
     gap: 6px;
 }
 
+.checkbox-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin: 4px 0;
+}
+
 .checkbox-group {
+    display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     cursor: pointer;
     user-select: none;
-    margin: 4px 0;
 }
 
 .control-label {

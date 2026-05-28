@@ -2,9 +2,10 @@
     const vscode = acquireVsCodeApi();
 
     // Recover or initialize state
-    const previousState = vscode.getState() || { hideFiles: false, excludeRegex: '', collapsedPaths: [] };
+    const previousState = vscode.getState() || { hideFiles: false, hideDotDirs: true, excludeRegex: '', collapsedPaths: [] };
     
     const hideFilesToggle = document.getElementById('hide-files-toggle');
+    const hideDotDirsToggle = document.getElementById('hide-dot-dirs-toggle');
     const excludeRegexInput = document.getElementById('exclude-regex');
     const copyBtn = document.getElementById('copy-btn');
     const collapseAllBtn = document.getElementById('collapse-all-btn');
@@ -12,8 +13,9 @@
     const regexErrorIndicator = document.getElementById('regex-error-indicator');
     const regexErrorMsg = document.getElementById('regex-error-msg');
 
-    // Setup initial values from recovered state
+    // Setup initial values from recovered state (default hideDotDirs to true if not specified)
     hideFilesToggle.checked = previousState.hideFiles;
+    hideDotDirsToggle.checked = previousState.hideDotDirs !== undefined ? previousState.hideDotDirs : true;
     excludeRegexInput.value = previousState.excludeRegex;
     const collapsedPaths = new Set(previousState.collapsedPaths || []);
 
@@ -23,6 +25,7 @@
     function saveStateAndNotify() {
         const state = {
             hideFiles: hideFilesToggle.checked,
+            hideDotDirs: hideDotDirsToggle.checked,
             excludeRegex: excludeRegexInput.value,
             collapsedPaths: Array.from(collapsedPaths)
         };
@@ -32,6 +35,7 @@
             type: 'configChanged',
             config: {
                 hideFiles: state.hideFiles,
+                hideDotDirs: state.hideDotDirs,
                 excludeRegex: state.excludeRegex
             }
         });
@@ -39,6 +43,10 @@
 
     // Event listeners for configuration controls
     hideFilesToggle.addEventListener('change', () => {
+        saveStateAndNotify();
+    });
+
+    hideDotDirsToggle.addEventListener('change', () => {
         saveStateAndNotify();
     });
 

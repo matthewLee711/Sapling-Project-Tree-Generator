@@ -11,6 +11,7 @@ interface ITreeNode {
 
 interface TreeConfig {
     hideFiles: boolean;
+    hideDotDirs: boolean;
     excludeRegex: string;
 }
 
@@ -20,6 +21,7 @@ export class ProjectTreeProvider implements vscode.WebviewViewProvider {
     private _watcher?: vscode.FileSystemWatcher;
     private _config: TreeConfig = {
         hideFiles: false,
+        hideDotDirs: true,
         excludeRegex: ''
     };
     private _debounceTimeout?: NodeJS.Timeout;
@@ -180,6 +182,11 @@ export class ProjectTreeProvider implements vscode.WebviewViewProvider {
                 const childRelativePath = relativePath ? `${relativePath}/${entryName}` : entryName;
 
                 if (entryType === vscode.FileType.Directory) {
+                    // Skip dot-prefixed directories if "Hide Dot Folders" toggle is active
+                    if (this._config.hideDotDirs && entryName.startsWith('.')) {
+                        continue;
+                    }
+
                     const childNode = await this._traverseDirectory(childUri, entryName, childRelativePath, customRegex);
                     if (childNode) {
                         node.children?.push(childNode);
@@ -285,12 +292,21 @@ export class ProjectTreeProvider implements vscode.WebviewViewProvider {
         </header>
 
         <section class="controls">
-            <div class="control-group checkbox-group">
-                <label class="switch">
-                    <input type="checkbox" id="hide-files-toggle">
-                    <span class="slider"></span>
-                </label>
-                <span class="control-label">Hide Files</span>
+            <div class="checkbox-row">
+                <div class="checkbox-group">
+                    <label class="switch">
+                        <input type="checkbox" id="hide-files-toggle">
+                        <span class="slider"></span>
+                    </label>
+                    <span class="control-label">Hide Files</span>
+                </div>
+                <div class="checkbox-group">
+                    <label class="switch">
+                        <input type="checkbox" id="hide-dot-dirs-toggle">
+                        <span class="slider"></span>
+                    </label>
+                    <span class="control-label">Hide Dot Folders</span>
+                </div>
             </div>
 
             <div class="control-group">
