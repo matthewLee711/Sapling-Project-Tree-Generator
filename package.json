@@ -2,7 +2,7 @@
   "name": "project-tree-generator",
   "displayName": "Sapling Project Tree Generator",
   "description": "Generates, filters, and exports customizable project directory trees directly from your sidebar.",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "publisher": "spiffyfighter",
   "repository": "https://github.com/matthewLee711/Sapling-Project-Tree-Generator",
   "license": "MIT",
@@ -12,9 +12,7 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onView:sapling-project-tree-view"
-  ],
+  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "viewsContainers": {
