@@ -2,9 +2,9 @@
     const vscode = acquireVsCodeApi();
 
     // Recover or initialize state
-    const previousState = vscode.getState() || { showAll: false, excludeRegex: '', collapsedPaths: [] };
+    const previousState = vscode.getState() || { hideFiles: false, excludeRegex: '', collapsedPaths: [] };
     
-    const showAllToggle = document.getElementById('show-all-toggle');
+    const hideFilesToggle = document.getElementById('hide-files-toggle');
     const excludeRegexInput = document.getElementById('exclude-regex');
     const copyBtn = document.getElementById('copy-btn');
     const collapseAllBtn = document.getElementById('collapse-all-btn');
@@ -13,7 +13,7 @@
     const regexErrorMsg = document.getElementById('regex-error-msg');
 
     // Setup initial values from recovered state
-    showAllToggle.checked = previousState.showAll;
+    hideFilesToggle.checked = previousState.hideFiles;
     excludeRegexInput.value = previousState.excludeRegex;
     const collapsedPaths = new Set(previousState.collapsedPaths || []);
 
@@ -22,7 +22,7 @@
     // Save and sync settings
     function saveStateAndNotify() {
         const state = {
-            showAll: showAllToggle.checked,
+            hideFiles: hideFilesToggle.checked,
             excludeRegex: excludeRegexInput.value,
             collapsedPaths: Array.from(collapsedPaths)
         };
@@ -31,14 +31,14 @@
         vscode.postMessage({
             type: 'configChanged',
             config: {
-                showAll: state.showAll,
+                hideFiles: state.hideFiles,
                 excludeRegex: state.excludeRegex
             }
         });
     }
 
     // Event listeners for configuration controls
-    showAllToggle.addEventListener('change', () => {
+    hideFilesToggle.addEventListener('change', () => {
         saveStateAndNotify();
     });
 

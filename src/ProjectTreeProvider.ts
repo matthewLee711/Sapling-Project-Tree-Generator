@@ -10,7 +10,7 @@ interface ITreeNode {
 }
 
 interface TreeConfig {
-    showAll: boolean;
+    hideFiles: boolean;
     excludeRegex: string;
 }
 
@@ -19,10 +19,9 @@ export class ProjectTreeProvider implements vscode.WebviewViewProvider {
     private _view?: vscode.WebviewView;
     private _watcher?: vscode.FileSystemWatcher;
     private _config: TreeConfig = {
-        showAll: false,
+        hideFiles: false,
         excludeRegex: ''
     };
-    private _gitignoreRules: RegExp[] = [];
     private _debounceTimeout?: NodeJS.Timeout;
     private _disposables: vscode.Disposable[] = [];
 
@@ -50,7 +49,6 @@ export class ProjectTreeProvider implements vscode.WebviewViewProvider {
             async (message) => {
                 switch (message.type) {
                     case 'ready':
-                        await this._loadGitignoreRules();
                         this._startWatcher();
                         this.sendTreeData();
                         break;
@@ -67,10 +65,9 @@ export class ProjectTreeProvider implements vscode.WebviewViewProvider {
             this._disposables
         );
 
-        // Re-read gitignore and rebuild on active workspace changes
+        // Rebuild on active workspace changes
         this._disposables.push(
-            vscode.workspace.onDidChangeWorkspaceFolders(async () => {
-                await this._loadGitignoreRules();
+            vscode.workspace.onDidChangeWorkspaceFolders(() => {
                 this._startWatcher();
                 this.sendTreeData();
             })
@@ -117,7 +114,6 @@ export class ProjectTreeProvider implements vscode.WebviewViewProvider {
                         type: 'regexError', 
                         message: e.message || 'Invalid Regular Expression' 
                     });
-                    // Don't halt completely; proceed without custom regex or send partial state
                 }
             } else {
                 this._view.webview.postMessage({ type: 'regexValid' });
@@ -130,68 +126,6 @@ export class ProjectTreeProvider implements vscode.WebviewViewProvider {
             });
         } catch (err: any) {
             vscode.window.showErrorMessage(`Failed to generate project tree: ${err.message}`);
-        }
-    }
-
-    private async _loadGitignoreRules() {
-        this._gitignoreRules = [];
-        const folders = vscode.workspace.workspaceFolders;
-        if (!folders) {
-            return;
-        }
-
-        for (const folder of folders) {
-            const gitignoreUri = vscode.Uri.joinPath(folder.uri, '.gitignore');
-            try {
-                const contentBuffer = await vscode.workspace.fs.readFile(gitignoreUri);
-                const content = Buffer.from(contentBuffer).toString('utf8');
-                const lines = content.split(/\r?\n/);
-                
-                for (const line of lines) {
-                    const rule = this._gitignoreRuleToRegex(line);
-                    if (rule) {
-                        this._gitignoreRules.push(rule);
-                    }
-                }
-            } catch (e) {
-                // .gitignore file probably doesn't exist, ignore
-            }
-        }
-    }
-
-    private _gitignoreRuleToRegex(rule: string): RegExp | null {
-        const r = rule.trim();
-        if (!r || r.startsWith('#')) {
-            return null;
-        }
-        // Exclude negated patterns from simple matching for safety
-        if (r.startsWith('!')) {
-            return null; 
-        }
-
-        // Convert glob pattern to a basic regex
-        let regexStr = r
-            .replace(/[\-\[\]\{\}\(\)\+\.\^\$\|]/g, '\\$&') // escape regex special chars
-            .replace(/\*\*/g, '.*')
-            .replace(/\*/g, '[^/]*')
-            .replace(/\?/g, '.');
-
-        if (regexStr.endsWith('/')) {
-            regexStr = regexStr + '.*';
-        } else {
-            regexStr = regexStr + '($|/)';
-        }
-
-        if (r.startsWith('/')) {
-            regexStr = '^' + regexStr.slice(1);
-        } else {
-            regexStr = '(^|/)' + regexStr;
-        }
-
-        try {
-            return new RegExp(regexStr);
-        } catch (e) {
-            return null;
         }
     }
 
@@ -217,21 +151,7 @@ export class ProjectTreeProvider implements vscode.WebviewViewProvider {
         relativePath: string,
         customRegex: RegExp | null
     ): Promise<ITreeNode | null> {
-        // Evaluate default ignores if "Show All" is disabled
-        if (!this._config.showAll) {
-            const lowerName = name.toLowerCase();
-            const standardIgnores = ['node_modules', '.git', '.vscode', 'dist', 'out', 'build', '.ds_store'];
-            if (standardIgnores.includes(lowerName)) {
-                return null;
-            }
-
-            // Check gitignore matches
-            if (relativePath && this._isGitignored(relativePath)) {
-                return null;
-            }
-        }
-
-        // Check custom regex matches
+        // Check custom regex matches on the folder/file relative path
         if (customRegex && relativePath && customRegex.test(relativePath)) {
             return null;
         }
@@ -265,12 +185,11 @@ export class ProjectTreeProvider implements vscode.WebviewViewProvider {
                         node.children?.push(childNode);
                     }
                 } else if (entryType === vscode.FileType.File) {
-                    // Check ignore criteria for files
-                    if (!this._config.showAll) {
-                        if (this._isGitignored(childRelativePath)) {
-                            continue;
-                        }
+                    // Skip files if "Hide Files" toggle is active (should only show directories)
+                    if (this._config.hideFiles) {
+                        continue;
                     }
+
                     if (customRegex && customRegex.test(childRelativePath)) {
                         continue;
                     }
@@ -288,17 +207,6 @@ export class ProjectTreeProvider implements vscode.WebviewViewProvider {
         }
 
         return node;
-    }
-
-    private _isGitignored(testPath: string): boolean {
-        // Standardize path separators to forward slashes for matching
-        const standardizedPath = testPath.replace(/\\/g, '/');
-        for (const rule of this._gitignoreRules) {
-            if (rule.test(standardizedPath)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private async _handleCopyRequest() {
@@ -379,10 +287,10 @@ export class ProjectTreeProvider implements vscode.WebviewViewProvider {
         <section class="controls">
             <div class="control-group checkbox-group">
                 <label class="switch">
-                    <input type="checkbox" id="show-all-toggle">
+                    <input type="checkbox" id="hide-files-toggle">
                     <span class="slider"></span>
                 </label>
-                <span class="control-label">Show All Files</span>
+                <span class="control-label">Hide Files</span>
             </div>
 
             <div class="control-group">
