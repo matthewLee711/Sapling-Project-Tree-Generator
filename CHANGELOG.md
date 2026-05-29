@@ -2,7 +2,16 @@
 
 All notable changes to the **Project Tree Generator** extension will be documented in this file.
 
-## [1.1.0] - 2026-05-28
+## [1.0.5] - 2026-05-29
+
+### Added
+- **"Collapse All / Open All" toggle**: The "Collapse All" button now switches to "Open All" after collapsing all directories. Pressing "Open All" expands every directory and toggles the button back.
+- Toggle state persists across webview reloads via `vscode.setState()`.
+- Manually expanding or collapsing an individual directory resets the button back to "Collapse All".
+
+---
+
+## [1.0.4] - 2026-05-28
 
 ### Added
 - Added **"Hide Dot Folders"** toggle in the configuration panel.

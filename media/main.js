@@ -2,7 +2,7 @@
     const vscode = acquireVsCodeApi();
 
     // Recover or initialize state
-    const previousState = vscode.getState() || { hideFiles: false, hideDotDirs: true, excludeRegex: '', collapsedPaths: [] };
+    const previousState = vscode.getState() || { hideFiles: false, hideDotDirs: true, excludeRegex: '', collapsedPaths: [], isAllCollapsed: false };
     
     const hideFilesToggle = document.getElementById('hide-files-toggle');
     const hideDotDirsToggle = document.getElementById('hide-dot-dirs-toggle');
@@ -19,6 +19,11 @@
     excludeRegexInput.value = previousState.excludeRegex;
     const collapsedPaths = new Set(previousState.collapsedPaths || []);
 
+    let isAllCollapsed = previousState.isAllCollapsed || false;
+    if (isAllCollapsed) {
+        collapseAllBtn.textContent = 'Open All';
+    }
+
     let currentTreeData = null;
 
     // Save and sync settings
@@ -27,7 +32,8 @@
             hideFiles: hideFilesToggle.checked,
             hideDotDirs: hideDotDirsToggle.checked,
             excludeRegex: excludeRegexInput.value,
-            collapsedPaths: Array.from(collapsedPaths)
+            collapsedPaths: Array.from(collapsedPaths),
+            isAllCollapsed: isAllCollapsed
         };
         vscode.setState(state);
         
@@ -66,16 +72,25 @@
     collapseAllBtn.addEventListener('click', () => {
         if (!currentTreeData) return;
         
-        // Traverse tree data and add all directories to collapsedPaths
-        function collapseRecursively(node) {
-            if (node.isDirectory) {
-                collapsedPaths.add(node.relativePath);
-                if (node.children) {
-                    node.children.forEach(collapseRecursively);
+        if (!isAllCollapsed) {
+            // Collapse All — add every directory to collapsedPaths
+            function collapseRecursively(node) {
+                if (node.isDirectory) {
+                    collapsedPaths.add(node.relativePath);
+                    if (node.children) {
+                        node.children.forEach(collapseRecursively);
+                    }
                 }
             }
+            currentTreeData.forEach(collapseRecursively);
+            isAllCollapsed = true;
+            collapseAllBtn.textContent = 'Open All';
+        } else {
+            // Open All — clear every collapsed path
+            collapsedPaths.clear();
+            isAllCollapsed = false;
+            collapseAllBtn.textContent = 'Collapse All';
         }
-        currentTreeData.forEach(collapseRecursively);
         saveStateAndNotify();
         renderTree(currentTreeData);
     });
@@ -199,6 +214,9 @@
                     row.classList.add('collapsed');
                     childrenContainer.classList.add('collapsed');
                 }
+                // Reset toggle state since tree is no longer fully collapsed/expanded
+                isAllCollapsed = false;
+                collapseAllBtn.textContent = 'Collapse All';
                 saveStateAndNotify();
             });
         }
