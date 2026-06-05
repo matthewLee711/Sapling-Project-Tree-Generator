@@ -310,11 +310,15 @@ export class ProjectTreeProvider implements vscode.WebviewViewProvider {
 
             <div class="control-group">
                 <label for="exclude-regex" class="field-label">Exclude Regex Filter</label>
-                <div class="input-container">
-                    <input type="text" id="exclude-regex" placeholder="e.g. \\.test\\.ts$|temp" spellcheck="false">
-                    <span id="regex-error-indicator" class="error-indicator" title="Invalid regular expression">⚠️</span>
+                <div class="regex-row">
+                    <div class="input-container">
+                        <input type="text" id="exclude-regex" placeholder="e.g. \\.test\\.ts$|temp" spellcheck="false">
+                        <span id="regex-error-indicator" class="error-indicator" title="Invalid regular expression">⚠️</span>
+                    </div>
+                    <button id="save-regex-btn" class="btn btn-secondary btn-small" title="Save current regex">💾</button>
                 </div>
                 <div id="regex-error-msg" class="error-message"></div>
+                <div id="saved-regex-container" class="saved-regex-container"></div>
             </div>
 
             <button id="copy-btn" class="btn btn-primary">
@@ -333,6 +337,17 @@ export class ProjectTreeProvider implements vscode.WebviewViewProvider {
                 <div class="loading">Loading workspace files...</div>
             </div>
         </section>
+    </div>
+
+    <div id="context-menu" class="context-menu" style="display:none;">
+        <div class="context-menu-item" data-action="or">
+            <span>Exclude (OR)</span>
+            <span class="shortcut-hint">Ctrl+E</span>
+        </div>
+        <div class="context-menu-item" data-action="and">
+            <span>Exclude (AND)</span>
+            <span class="shortcut-hint">Ctrl+T</span>
+        </div>
     </div>
 
     <script nonce="${nonce}" src="${scriptUri}"></script>

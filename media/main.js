@@ -2,7 +2,7 @@
     const vscode = acquireVsCodeApi();
 
     // Recover or initialize state
-    const previousState = vscode.getState() || { hideFiles: false, hideDotDirs: true, excludeRegex: '', collapsedPaths: [], isAllCollapsed: false };
+    const previousState = vscode.getState() || { hideFiles: false, hideDotDirs: true, excludeRegex: '', collapsedPaths: [], isAllCollapsed: false, savedRegexes: [] };
     
     const hideFilesToggle = document.getElementById('hide-files-toggle');
     const hideDotDirsToggle = document.getElementById('hide-dot-dirs-toggle');
@@ -12,6 +12,9 @@
     const treeContainer = document.getElementById('tree-container');
     const regexErrorIndicator = document.getElementById('regex-error-indicator');
     const regexErrorMsg = document.getElementById('regex-error-msg');
+    const saveRegexBtn = document.getElementById('save-regex-btn');
+    const savedRegexContainer = document.getElementById('saved-regex-container');
+    const contextMenu = document.getElementById('context-menu');
 
     // Setup initial values from recovered state (default hideDotDirs to true if not specified)
     hideFilesToggle.checked = previousState.hideFiles;
@@ -24,7 +27,50 @@
         collapseAllBtn.textContent = 'Open All';
     }
 
+    const savedRegexes = previousState.savedRegexes || [];
+
     let currentTreeData = null;
+    let contextMenuTargetName = null; // Name of the node that was right-clicked
+
+    // ─── Utility: escape special regex characters in a string ───
+    function escapeRegex(str) {
+        return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // ─── Utility: append a name to the regex input ───
+    function appendToRegex(name, mode) {
+        const escaped = escapeRegex(name);
+        const current = excludeRegexInput.value.trim();
+
+        if (mode === 'or') {
+            if (current === '') {
+                excludeRegexInput.value = escaped;
+            } else {
+                excludeRegexInput.value = current + '|' + escaped;
+            }
+        } else if (mode === 'and') {
+            if (current === '') {
+                excludeRegexInput.value = '(?=.*' + escaped + ')';
+            } else {
+                excludeRegexInput.value = current + '(?=.*' + escaped + ')';
+            }
+        }
+
+        saveStateAndNotify();
+    }
+
+    // ─── Compute combined regex: text box + all saved regexes ───
+    function getEffectiveRegex() {
+        const parts = [];
+        const inputValue = excludeRegexInput.value.trim();
+        if (inputValue) {
+            parts.push(inputValue);
+        }
+        savedRegexes.forEach(function (r) {
+            if (r) parts.push(r);
+        });
+        return parts.join('|');
+    }
 
     // Save and sync settings
     function saveStateAndNotify() {
@@ -33,7 +79,8 @@
             hideDotDirs: hideDotDirsToggle.checked,
             excludeRegex: excludeRegexInput.value,
             collapsedPaths: Array.from(collapsedPaths),
-            isAllCollapsed: isAllCollapsed
+            isAllCollapsed: isAllCollapsed,
+            savedRegexes: savedRegexes
         };
         vscode.setState(state);
         
@@ -42,7 +89,7 @@
             config: {
                 hideFiles: state.hideFiles,
                 hideDotDirs: state.hideDotDirs,
-                excludeRegex: state.excludeRegex
+                excludeRegex: getEffectiveRegex()
             }
         });
     }
@@ -94,6 +141,130 @@
         saveStateAndNotify();
         renderTree(currentTreeData);
     });
+
+    // ─── Context Menu Logic ───
+
+    function showContextMenu(x, y) {
+        contextMenu.style.display = 'block';
+        contextMenu.style.left = x + 'px';
+        contextMenu.style.top = y + 'px';
+
+        // Clamp to viewport so it doesn't overflow
+        const rect = contextMenu.getBoundingClientRect();
+        if (rect.right > window.innerWidth) {
+            contextMenu.style.left = (window.innerWidth - rect.width - 4) + 'px';
+        }
+        if (rect.bottom > window.innerHeight) {
+            contextMenu.style.top = (window.innerHeight - rect.height - 4) + 'px';
+        }
+    }
+
+    function hideContextMenu() {
+        contextMenu.style.display = 'none';
+        contextMenuTargetName = null;
+        // Remove highlight from any previously right-clicked node
+        const active = document.querySelector('.tree-node.context-active');
+        if (active) active.classList.remove('context-active');
+    }
+
+    // Menu item clicks
+    contextMenu.addEventListener('click', (e) => {
+        const item = e.target.closest('.context-menu-item');
+        if (!item || !contextMenuTargetName) return;
+
+        const action = item.dataset.action; // 'or' or 'and'
+        appendToRegex(contextMenuTargetName, action);
+        hideContextMenu();
+    });
+
+    // Dismiss on click outside or Escape
+    document.addEventListener('click', (e) => {
+        if (!contextMenu.contains(e.target)) {
+            hideContextMenu();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            hideContextMenu();
+            return;
+        }
+
+        // Ctrl+E → Exclude (OR) for the context menu target
+        if (e.ctrlKey && e.key === 'e' && contextMenuTargetName) {
+            e.preventDefault();
+            appendToRegex(contextMenuTargetName, 'or');
+            hideContextMenu();
+            return;
+        }
+
+        // Ctrl+T → Exclude (AND) for the context menu target
+        if (e.ctrlKey && e.key === 't' && contextMenuTargetName) {
+            e.preventDefault();
+            appendToRegex(contextMenuTargetName, 'and');
+            hideContextMenu();
+            return;
+        }
+    });
+
+    // ─── Saved Regex Presets ───
+
+    function renderSavedRegexes() {
+        savedRegexContainer.innerHTML = '';
+        savedRegexes.forEach((regex, index) => {
+            const chip = document.createElement('div');
+            chip.className = 'regex-chip';
+            chip.title = regex;
+
+            const text = document.createElement('span');
+            text.className = 'regex-chip-text';
+            text.textContent = regex;
+            chip.appendChild(text);
+
+            const deleteBtn = document.createElement('span');
+            deleteBtn.className = 'regex-chip-delete';
+            deleteBtn.textContent = '×';
+            deleteBtn.title = 'Remove saved regex';
+            chip.appendChild(deleteBtn);
+
+            // Click chip → append regex to input
+            chip.addEventListener('click', (e) => {
+                if (e.target === deleteBtn) return; // let delete handler fire instead
+                const current = excludeRegexInput.value.trim();
+                if (current === '') {
+                    excludeRegexInput.value = regex;
+                } else {
+                    excludeRegexInput.value = current + '|' + regex;
+                }
+                saveStateAndNotify();
+            });
+
+            // Click × → remove from saved list
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                savedRegexes.splice(index, 1);
+                renderSavedRegexes();
+                saveStateAndNotify();
+            });
+
+            savedRegexContainer.appendChild(chip);
+        });
+    }
+
+    saveRegexBtn.addEventListener('click', () => {
+        const current = excludeRegexInput.value.trim();
+        if (!current) return; // nothing to save
+
+        // Don't save duplicates
+        if (savedRegexes.includes(current)) return;
+
+        savedRegexes.push(current);
+        renderSavedRegexes();
+        saveStateAndNotify();
+    });
+
+    // Initial render of saved chips
+    renderSavedRegexes();
 
     // Handle messages from the extension host
     window.addEventListener('message', event => {
@@ -185,6 +356,20 @@
         name.className = 'name';
         name.textContent = node.name;
         row.appendChild(name);
+
+        // Right-click → show custom context menu
+        row.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Remove highlight from any previous target
+            const prev = document.querySelector('.tree-node.context-active');
+            if (prev) prev.classList.remove('context-active');
+
+            row.classList.add('context-active');
+            contextMenuTargetName = node.name;
+            showContextMenu(e.clientX, e.clientY);
+        });
 
         wrapper.appendChild(row);
 

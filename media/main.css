@@ -349,3 +349,111 @@ input[type="text"].invalid + .error-indicator {
 .tree-node-children.collapsed {
     display: none;
 }
+
+/* Regex Row — input + save button side by side */
+.regex-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.regex-row .input-container {
+    flex: 1;
+}
+
+/* Custom Right-Click Context Menu */
+.context-menu {
+    position: fixed;
+    z-index: 1000;
+    background: var(--vscode-menu-background, #252526);
+    border: 1px solid var(--vscode-menu-border, #454545);
+    border-radius: 5px;
+    padding: 4px 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    min-width: 220px;
+    font-size: 12px;
+}
+
+.context-menu-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 14px;
+    cursor: pointer;
+    color: var(--vscode-menu-foreground, #cccccc);
+    transition: background-color 0.1s;
+}
+
+.context-menu-item:hover {
+    background: var(--vscode-menu-selectionBackground, #094771);
+    color: var(--vscode-menu-selectionForeground, #ffffff);
+}
+
+.shortcut-hint {
+    font-size: 10px;
+    opacity: 0.55;
+    margin-left: 20px;
+    font-family: var(--vscode-font-family, sans-serif);
+}
+
+/* Saved Regex Chips */
+.saved-regex-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 6px;
+}
+
+.saved-regex-container:empty {
+    display: none;
+}
+
+.regex-chip {
+    display: inline-flex;
+    align-items: center;
+    background: var(--vscode-badge-background, #4d4d4d);
+    color: var(--vscode-badge-foreground, #cccccc);
+    border-radius: 3px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-family: var(--vscode-editor-font-family, monospace);
+    max-width: 180px;
+    cursor: pointer;
+    transition: background-color 0.15s, box-shadow 0.15s;
+    user-select: none;
+}
+
+.regex-chip:hover {
+    background: var(--vscode-list-hoverBackground, #2a2d2e);
+    box-shadow: 0 0 0 1px var(--vscode-focusBorder, #007acc);
+}
+
+.regex-chip-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.regex-chip-delete {
+    display: none;
+    margin-left: 5px;
+    font-size: 13px;
+    line-height: 1;
+    color: var(--vscode-descriptionForeground, #888);
+    cursor: pointer;
+    font-style: normal;
+}
+
+.regex-chip:hover .regex-chip-delete {
+    display: inline;
+}
+
+.regex-chip-delete:hover {
+    color: var(--vscode-errorForeground, #f88070);
+}
+
+/* Highlight tree node when right-clicked */
+.tree-node.context-active {
+    background-color: var(--vscode-list-activeSelectionBackground, #094771);
+    color: var(--vscode-list-activeSelectionForeground, #ffffff);
+}

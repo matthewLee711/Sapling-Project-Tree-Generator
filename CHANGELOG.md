@@ -2,6 +2,21 @@
 
 All notable changes to the **Project Tree Generator** extension will be documented in this file.
 
+## [1.0.6] - 2026-06-05
+
+### Added
+- **Right-click context menu**: Right-click any file or directory in the tree to access exclusion options:
+  - **Exclude (OR)** (`Ctrl+E`): Appends the name with `|` (pipe) to the regex — matches this name *or* previous patterns.
+  - **Exclude (AND)** (`Ctrl+T`): Appends a lookahead group `(?=.*name)` — matches paths containing this name *and* previous patterns.
+- Smart edge-case handling: when the regex input is empty, no leading `|` or unnecessary wrapping is added.
+- File/directory names are automatically regex-escaped (e.g. `.gitignore` → `\.gitignore`).
+- **Saved regex presets**: Click the 💾 button to save the current regex as a reusable chip below the input.
+  - Click a chip to **append** its regex to the current filter.
+  - Hover over a chip to reveal a `×` delete button.
+  - Saved presets persist across webview reloads.
+
+---
+
 ## [1.0.5] - 2026-05-29
 
 ### Added
